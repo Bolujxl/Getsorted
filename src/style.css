@@ -4,10 +4,24 @@
 @theme {
   /* App shell */
   --color-gs-app-bg: var(--gs-app-bg);
+  --color-gs-header-bg: var(--gs-header-bg);
+  --color-gs-header-border: var(--gs-header-border);
+
+  /* Text */
+  --color-gs-text-primary: var(--gs-text-primary);
+  --color-gs-text-secondary: var(--gs-text-secondary);
+  --color-gs-text-muted: var(--gs-text-muted);
+  --color-gs-text-heading: var(--gs-text-heading);
+
+  /* Cards */
   --color-gs-card-bg: var(--gs-card-bg);
+  --color-gs-card-hover: var(--gs-card-hover);
   --color-gs-card-border: var(--gs-card-border);
-  --color-gs-card-text: var(--gs-card-text);
-  --color-gs-card-subtext: var(--gs-card-subtext);
+  --color-gs-card-border-hover: var(--gs-card-border-hover);
+
+  /* Columns */
+  --color-gs-col-bg: var(--gs-col-bg);
+  --color-gs-col-border: var(--gs-col-border);
 
   /* Input */
   --color-gs-input-bg: var(--gs-input-bg);
@@ -17,42 +31,45 @@
   --color-gs-input-placeholder: var(--gs-input-placeholder);
 
   /* Buttons */
-  --color-gs-btn-primary: var(--gs-btn-primary-bg);
-  --color-gs-btn-primary-text: var(--gs-btn-primary-text);
-  --color-gs-btn-ghost-border: var(--gs-btn-ghost-border);
-  --color-gs-btn-ghost-text: var(--gs-btn-ghost-text);
+  --color-gs-btn-bg: var(--gs-btn-bg);
+  --color-gs-btn-text: var(--gs-btn-text);
+
+  /* Drag */
+  --box-shadow-gs-drag: var(--gs-drag-shadow);
 
   /* NOW column */
-  --color-gs-now-header: var(--gs-now-header-bg);
+  --color-gs-now-header-bg: var(--gs-now-header-bg);
   --color-gs-now-header-text: var(--gs-now-header-text);
-  --color-gs-now-col: var(--gs-now-col-bg);
-  --color-gs-now-col-border: var(--gs-now-col-border);
-  --color-gs-now-badge: var(--gs-now-badge-bg);
+  --color-gs-now-col-bg: var(--gs-now-col-bg);
+  --color-gs-now-badge-bg: var(--gs-now-badge-bg);
   --color-gs-now-badge-text: var(--gs-now-badge-text);
+  --color-gs-now-accent: var(--gs-now-accent);
 
   /* SOON column */
-  --color-gs-soon-header: var(--gs-soon-header-bg);
+  --color-gs-soon-header-bg: var(--gs-soon-header-bg);
   --color-gs-soon-header-text: var(--gs-soon-header-text);
-  --color-gs-soon-col: var(--gs-soon-col-bg);
-  --color-gs-soon-col-border: var(--gs-soon-col-border);
-  --color-gs-soon-badge: var(--gs-soon-badge-bg);
+  --color-gs-soon-col-bg: var(--gs-soon-col-bg);
+  --color-gs-soon-badge-bg: var(--gs-soon-badge-bg);
   --color-gs-soon-badge-text: var(--gs-soon-badge-text);
+  --color-gs-soon-accent: var(--gs-soon-accent);
 
   /* LATER column */
-  --color-gs-later-header: var(--gs-later-header-bg);
+  --color-gs-later-header-bg: var(--gs-later-header-bg);
   --color-gs-later-header-text: var(--gs-later-header-text);
-  --color-gs-later-col: var(--gs-later-col-bg);
-  --color-gs-later-col-border: var(--gs-later-col-border);
-  --color-gs-later-badge: var(--gs-later-badge-bg);
+  --color-gs-later-col-bg: var(--gs-later-col-bg);
+  --color-gs-later-badge-bg: var(--gs-later-badge-bg);
   --color-gs-later-badge-text: var(--gs-later-badge-text);
+  --color-gs-later-accent: var(--gs-later-accent);
 
   /* Typography */
-  --font-size-gs-xs: var(--gs-text-xs);
-  --font-size-gs-sm: var(--gs-text-sm);
-  --font-size-gs-base: var(--gs-text-base);
-  --font-size-gs-md: var(--gs-text-md);
-  --font-size-gs-lg: var(--gs-text-lg);
-  --font-size-gs-xl: var(--gs-text-xl);
+  --font-size-gs-xs: var(--gs-text-xs);       /* 11px */
+  --font-size-gs-sm: var(--gs-text-sm);        /* 13px */
+  --font-size-gs-base: var(--gs-text-base);    /* 14px */
+  --font-size-gs-md: var(--gs-text-md);        /* 16px */
+  --font-size-gs-lg: var(--gs-text-lg);        /* 20px */
+  --font-size-gs-xl: var(--gs-text-xl);        /* 28px */
+  --font-size-gs-badge: 12px;
+  --font-size-gs-heading: 18px;
 
   /* Radius */
   --radius-gs-sm: var(--gs-radius-sm);
@@ -63,6 +80,15 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
   background: var(--gs-app-bg);
+  color: var(--gs-text-primary);
+}
+
+::placeholder {
+  color: var(--gs-input-placeholder);
+  opacity: 1;
 }
