@@ -117,9 +117,14 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight text-gray-800 mb-8">
-        GetSorted
-      </h1>
+      <header className="mb-8">
+        <img
+          src="/logo-light.svg"
+          alt="GetSorted"
+          height={36}
+          style={{ display: 'block' }}
+        />
+      </header>
 
       {/* ---- Input ---- */}
       <div className="w-full max-w-2xl flex gap-2 mb-10">
@@ -133,7 +138,7 @@ function App() {
         />
         <button
           onClick={addTask}
-          className="px-6 py-3 rounded-lg bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
+          className="px-6 py-3 rounded-lg bg-[#111111] text-white text-sm font-medium hover:bg-gray-800 transition-colors"
         >
           Add
         </button>
