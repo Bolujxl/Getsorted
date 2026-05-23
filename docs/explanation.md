@@ -367,6 +367,79 @@ snapshot.isDragging ? 'opacity-[0.85] shadow-gs-drag' : ''
 |---|---|
 | "When you're holding the card in the air, it becomes a little see-through and casts a shadow" | 85% opacity + a `box-shadow` defined by `--gs-drag-shadow` (0px X-offset, 12px Y-offset, 32px blur, 50% black in dark mode). Creates the illusion of the card floating above the board. |
 
+### Why `provided.draggableProps.style` MUST be merged — not replaced
+
+**ELI7:** The drag library puts an invisible tracking sticker on the card that says "hey browser, move this card 50 pixels to the right while I'm being dragged." If we slap our own sticker on top of theirs, the browser loses the instruction and the card just sits there — you can't drag it anymore.
+
+**Dev:** `provided.draggableProps` is an object spread onto the card's outer `<div>`. One of its properties is `style`, which contains:
+
+```ts
+{
+  transform: 'translate(120px, 45px)',   // where the card should visually be
+  transition: 'transform 0.2s ease',      // smooth animation when dropped
+  // possibly other positioning props
+}
+```
+
+Without this `transform`, the browser doesn't know where to paint the card during a drag — it stays at its original DOM position. The drag *logic* still fires (`onDragEnd` still gets called), but the card never follows the cursor. It looks broken to the user, but it's actually just invisible movement.
+
+**The bug:** Our explicit `style={{ backgroundColor: ..., border: ... }}` on the same `<div>` replaces the spread's `style` entirely — JSX processes props left-to-right, and the last `style` wins:
+
+```tsx
+// BROKEN — our style replaces the library's style
+<div
+  ref={provided.innerRef}
+  {...provided.draggableProps}    // sets style = { transform: '...' }
+  style={{                        // THIS OVERWRITES the transform!
+    backgroundColor: 'var(--gs-card-bg)',
+    border: '1px solid var(--gs-card-border)',
+    ...
+  }}
+>
+```
+
+**The fix — spread `provided.draggableProps.style` into our own style object:**
+
+```tsx
+// FIXED — merge, don't replace
+<div
+  ref={provided.innerRef}
+  {...provided.draggableProps}    // sets style (overridden below)
+  style={{
+    ...provided.draggableProps.style,   // ← PRESERVE the library's transform/transition
+    backgroundColor: 'var(--gs-card-bg)',
+    border: '1px solid var(--gs-card-border)',
+    ...
+  }}
+>
+```
+
+Now the browser receives BOTH the DnD positioning (`transform`) AND our visual styles (`backgroundColor`, `border`, etc.) in the same `style` object. The card follows the cursor correctly.
+
+### Hover handlers: guarding against drag interference
+
+**ELI7:** When you're dragging a card, it's flying through the air. You don't want the "hover color change" to happen mid-flight — it'd look glitchy. So we check: "are we currently dragging? If yes, skip the hover stuff."
+
+**Dev:** Both `onMouseEnter` and `onMouseLeave` now guard with `!snapshot.isDragging`:
+
+```tsx
+onMouseEnter={e => {
+  if (!snapshot.isDragging) {                     // ← guard
+    e.currentTarget.style.backgroundColor = 'var(--gs-card-hover)'
+    e.currentTarget.style.borderColor = 'var(--gs-card-border-hover)'
+    // ...
+  }
+}}
+onMouseLeave={e => {
+  if (!snapshot.isDragging) {                     // ← guard
+    e.currentTarget.style.backgroundColor = 'var(--gs-card-bg)'
+    e.currentTarget.style.borderColor = 'var(--gs-card-border)'
+  }
+}}
+```
+
+Why this matters: mouse events CAN fire during or immediately after a drag (a `mouseleave` on the old position when the card is picked up, a `mouseenter` on the new position when dropped). Without the guard, `onMouseLeave` would reset `backgroundColor` and `borderColor` on the card div — potentially fighting with the post-drop animation the library is trying to play. The guard ensures our hover logic and the library's drag logic never step on each other's toes.
+
 ---
 
 ## The `getRelativeTime` Utility
