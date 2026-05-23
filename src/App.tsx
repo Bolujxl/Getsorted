@@ -2,6 +2,7 @@
 // Component tree: App > InputBar + Board > Column[] > TaskCard[]
 // State lives in App via useState<Task[]>. Drag-and-drop uses @hello-pangea/dnd.
 // No persistence; all data is ephemeral in-memory state.
+// Styling via design tokens from tokens.css, exposed as Tailwind utilities in style.css.
 
 import { useState, useCallback } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
@@ -25,13 +26,43 @@ interface Task {
 // Column configuration
 // ---------------------------------------------------------------------------
 
-const COLUMNS: { id: ColumnId; label: string; accent: string; empty: string }[] = [
-  { id: 'now',   label: 'NOW',   accent: '#E84545', empty: 'Nothing on fire. Nice.' },
-  { id: 'soon',  label: 'SOON',  accent: '#F5A623', empty: 'Queue is clear.' },
-  { id: 'later', label: 'LATER', accent: '#4A90D9', empty: 'No backlog. Rare.' },
+const COLUMNS: { id: ColumnId; label: string; empty: string }[] = [
+  { id: 'now',   label: 'NOW',   empty: 'Nothing on fire. Nice.' },
+  { id: 'soon',  label: 'SOON',  empty: 'Queue is clear.' },
+  { id: 'later', label: 'LATER', empty: 'No backlog. Rare.' },
 ]
 
 const COLUMN_ORDER: ColumnId[] = ['now', 'soon', 'later']
+
+const columnStyles: Record<ColumnId, {
+  headerBg: string
+  headerText: string
+  colBg: string
+  badgeBg: string
+  badgeText: string
+}> = {
+  now: {
+    headerBg:   'bg-gs-now-header',
+    headerText: 'text-gs-now-header-text',
+    colBg:      'bg-gs-now-col',
+    badgeBg:    'bg-gs-now-badge',
+    badgeText:  'text-gs-now-badge-text',
+  },
+  soon: {
+    headerBg:   'bg-gs-soon-header',
+    headerText: 'text-gs-soon-header-text',
+    colBg:      'bg-gs-soon-col',
+    badgeBg:    'bg-gs-soon-badge',
+    badgeText:  'text-gs-soon-badge-text',
+  },
+  later: {
+    headerBg:   'bg-gs-later-header',
+    headerText: 'text-gs-later-header-text',
+    colBg:      'bg-gs-later-col',
+    badgeBg:    'bg-gs-later-badge',
+    badgeText:  'text-gs-later-badge-text',
+  },
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -116,15 +147,17 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-10">
-      <header className="mb-8">
+    <div className="min-h-screen flex flex-col items-center">
+      <header className="w-full flex justify-center py-4 mb-8" style={{ backgroundColor: 'var(--gs-header-bg)' }}>
         <img
-          src="/logo-light.svg"
+          src="/logo-dark.svg"
           alt="GetSorted"
           height={36}
           style={{ display: 'block' }}
         />
       </header>
+
+      <div className="flex flex-col items-center px-4 py-10 pt-4 w-full">
 
       {/* ---- Input ---- */}
       <div className="w-full max-w-2xl flex gap-2 mb-10">
@@ -134,11 +167,11 @@ function App() {
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="What needs doing?"
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-800 placeholder-gray-400 outline-none focus:border-gray-500 text-base"
+          className="flex-1 px-4 py-3 rounded-gs-md border border-gs-input-border bg-gs-input-bg text-gs-input-text text-gs-base placeholder-gs-input-placeholder outline-none focus:border-gs-input-focus"
         />
         <button
           onClick={addTask}
-          className="px-6 py-3 rounded-lg bg-[#111111] text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+          className="px-6 py-3 rounded-gs-md bg-gs-btn-primary text-gs-btn-primary-text text-gs-sm font-medium hover:opacity-90 transition-opacity"
         >
           Add
         </button>
@@ -157,6 +190,7 @@ function App() {
           ))}
         </div>
       </DragDropContext>
+      </div>
     </div>
   )
 }
@@ -172,20 +206,16 @@ interface ColumnProps {
 }
 
 function Column({ column, tasks, onDelete }: ColumnProps) {
+  const s = columnStyles[column.id]
+
   return (
-    <div className="flex flex-col rounded-lg border border-gray-200 bg-white overflow-hidden">
+    <div className={`flex flex-col rounded-gs-md border border-gs-card-border overflow-hidden ${s.colBg}`}>
       {/* Header */}
-      <div
-        className="flex items-center gap-2 px-4 py-3 border-b bg-[#F5F5F0]"
-        style={{ borderBottomColor: column.accent, borderBottomWidth: 3 }}
-      >
-        <h2
-          className="text-sm font-bold tracking-wider"
-          style={{ color: column.accent }}
-        >
+      <div className={`flex items-center gap-2 px-4 py-3 ${s.headerBg}`}>
+        <h2 className={`text-gs-sm font-bold tracking-wider ${s.headerText}`}>
           {column.label}
         </h2>
-        <span className="ml-auto text-xs font-medium bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+        <span className={`ml-auto text-gs-xs font-medium px-2 py-0.5 rounded-gs-pill ${s.badgeBg} ${s.badgeText}`}>
           {tasks.length}
         </span>
       </div>
@@ -199,7 +229,7 @@ function Column({ column, tasks, onDelete }: ColumnProps) {
             className="flex-1 p-3 space-y-2 min-h-[120px]"
           >
             {tasks.length === 0 ? (
-              <p className="text-sm text-gray-400 italic text-center py-6 select-none">
+              <p className="text-gs-sm text-gs-card-subtext italic text-center py-6 select-none">
                 {column.empty}
               </p>
             ) : (
@@ -237,14 +267,14 @@ function TaskCard({ task, index, onDelete }: TaskCardProps) {
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`group flex items-center gap-2 px-3 py-3 rounded-lg border border-gray-200 bg-white transition-colors select-none ${
-            snapshot.isDragging ? 'border-gray-400' : ''
+          className={`group flex items-center gap-2 px-3 py-3 rounded-gs-sm border border-gs-card-border bg-gs-card-bg transition-colors select-none ${
+            snapshot.isDragging ? 'border-gs-card-subtext' : ''
           }`}
         >
           {/* Drag handle */}
           <div
             {...provided.dragHandleProps}
-            className="flex-shrink-0 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 text-gs-card-subtext/50 hover:text-gs-card-subtext cursor-grab active:cursor-grabbing"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
               <circle cx="4" cy="2" r="1.5" />
@@ -258,8 +288,8 @@ function TaskCard({ task, index, onDelete }: TaskCardProps) {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 truncate">{task.title}</p>
-            <span className="text-xs text-gray-400">
+            <p className="text-gs-sm text-gs-card-text truncate">{task.title}</p>
+            <span className="text-gs-xs text-gs-card-subtext">
               {getRelativeTime(task.createdAt)}
             </span>
           </div>
@@ -267,7 +297,7 @@ function TaskCard({ task, index, onDelete }: TaskCardProps) {
           {/* Delete */}
           <button
             onClick={() => onDelete(task.id)}
-            className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-gs-card-subtext/50 hover:text-gs-now-header hover:bg-gs-now-col opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Delete task"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">

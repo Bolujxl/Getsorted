@@ -1,7 +1,68 @@
 @import "tailwindcss";
+@import "./tokens.css";
+
+@theme {
+  /* App shell */
+  --color-gs-app-bg: var(--gs-app-bg);
+  --color-gs-card-bg: var(--gs-card-bg);
+  --color-gs-card-border: var(--gs-card-border);
+  --color-gs-card-text: var(--gs-card-text);
+  --color-gs-card-subtext: var(--gs-card-subtext);
+
+  /* Input */
+  --color-gs-input-bg: var(--gs-input-bg);
+  --color-gs-input-border: var(--gs-input-border);
+  --color-gs-input-focus: var(--gs-input-focus);
+  --color-gs-input-text: var(--gs-input-text);
+  --color-gs-input-placeholder: var(--gs-input-placeholder);
+
+  /* Buttons */
+  --color-gs-btn-primary: var(--gs-btn-primary-bg);
+  --color-gs-btn-primary-text: var(--gs-btn-primary-text);
+  --color-gs-btn-ghost-border: var(--gs-btn-ghost-border);
+  --color-gs-btn-ghost-text: var(--gs-btn-ghost-text);
+
+  /* NOW column */
+  --color-gs-now-header: var(--gs-now-header-bg);
+  --color-gs-now-header-text: var(--gs-now-header-text);
+  --color-gs-now-col: var(--gs-now-col-bg);
+  --color-gs-now-col-border: var(--gs-now-col-border);
+  --color-gs-now-badge: var(--gs-now-badge-bg);
+  --color-gs-now-badge-text: var(--gs-now-badge-text);
+
+  /* SOON column */
+  --color-gs-soon-header: var(--gs-soon-header-bg);
+  --color-gs-soon-header-text: var(--gs-soon-header-text);
+  --color-gs-soon-col: var(--gs-soon-col-bg);
+  --color-gs-soon-col-border: var(--gs-soon-col-border);
+  --color-gs-soon-badge: var(--gs-soon-badge-bg);
+  --color-gs-soon-badge-text: var(--gs-soon-badge-text);
+
+  /* LATER column */
+  --color-gs-later-header: var(--gs-later-header-bg);
+  --color-gs-later-header-text: var(--gs-later-header-text);
+  --color-gs-later-col: var(--gs-later-col-bg);
+  --color-gs-later-col-border: var(--gs-later-col-border);
+  --color-gs-later-badge: var(--gs-later-badge-bg);
+  --color-gs-later-badge-text: var(--gs-later-badge-text);
+
+  /* Typography */
+  --font-size-gs-xs: var(--gs-text-xs);
+  --font-size-gs-sm: var(--gs-text-sm);
+  --font-size-gs-base: var(--gs-text-base);
+  --font-size-gs-md: var(--gs-text-md);
+  --font-size-gs-lg: var(--gs-text-lg);
+  --font-size-gs-xl: var(--gs-text-xl);
+
+  /* Radius */
+  --radius-gs-sm: var(--gs-radius-sm);
+  --radius-gs-md: var(--gs-radius-md);
+  --radius-gs-lg: var(--gs-radius-lg);
+  --radius-gs-pill: var(--gs-radius-pill);
+}
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #F5F5F0;
+  background: var(--gs-app-bg);
 }
