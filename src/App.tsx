@@ -13,7 +13,7 @@ import type {
   DraggableProvided,
   DraggableStateSnapshot,
 } from '@hello-pangea/dnd'
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid' 
 
 // ---------------------------------------------------------------------------
 // Types
