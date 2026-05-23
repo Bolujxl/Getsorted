@@ -13,7 +13,7 @@
 
 ---
 
-## One Flat Array — The Entire Data Model
+## One Flat Array — The Entire Data Model 
 
 **ELI7:** Instead of three separate boxes for tasks, we have one big list. Each task wears a colored sticker that says which box it's in. When we need to show the NOW box, we look at the list and pick out all the tasks with a red "now" sticker. One list, three stickers. Easy to move things — just change the sticker.
 

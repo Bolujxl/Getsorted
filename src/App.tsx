@@ -347,6 +347,7 @@ function TaskCard({ task, index, onDelete }: TaskCardProps) {
             snapshot.isDragging ? 'opacity-[0.85] shadow-gs-drag' : ''
           }`}
           style={{
+            ...provided.draggableProps.style,
             backgroundColor: snapshot.isDragging
               ? undefined
               : 'var(--gs-card-bg)',
@@ -367,8 +368,10 @@ function TaskCard({ task, index, onDelete }: TaskCardProps) {
             }
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = 'var(--gs-card-bg)'
-            e.currentTarget.style.borderColor = 'var(--gs-card-border)'
+            if (!snapshot.isDragging) {
+              e.currentTarget.style.backgroundColor = 'var(--gs-card-bg)'
+              e.currentTarget.style.borderColor = 'var(--gs-card-border)'
+            }
           }}
         >
           {/* Drag handle */}
