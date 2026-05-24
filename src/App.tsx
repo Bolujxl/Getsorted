@@ -369,15 +369,12 @@ const TaskCard = memo(function TaskCard({ task, index, onDelete }: TaskCardProps
               : isHovered
                 ? 'var(--gs-card-hover)'
                 : 'var(--gs-card-bg)',
-            border: '1px solid var(--gs-card-border)',
+            border: `1px solid ${isHovered && !snapshot.isDragging ? 'var(--gs-card-border-hover)' : 'var(--gs-card-border)'}`,
             borderLeftWidth: 3,
             borderLeftColor: `var(--gs-${task.column}-accent)`,
             borderRadius: 10,
             padding: '12px 14px',
             gap: 10,
-            borderColor: isHovered && !snapshot.isDragging
-              ? 'var(--gs-card-border-hover)'
-              : 'var(--gs-card-border)',
           }}
         >
           {/* Drag handle */}
