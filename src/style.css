@@ -118,7 +118,7 @@ button:focus-visible {
 
 .gs-input {
   height: 42px;
-  font-size: var(--gs-text-base);
+  font-size: var(--gs-text-md);
   background-color: var(--gs-input-bg);
   border: 1px solid var(--gs-input-border);
   color: var(--gs-input-text);
