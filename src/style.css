@@ -2,76 +2,53 @@
 @import "./tokens.css";
 
 @theme {
-  /* App shell */
   --color-gs-app-bg: var(--gs-app-bg);
   --color-gs-header-bg: var(--gs-header-bg);
   --color-gs-header-border: var(--gs-header-border);
-
-  /* Text */
   --color-gs-text-primary: var(--gs-text-primary);
   --color-gs-text-secondary: var(--gs-text-secondary);
   --color-gs-text-muted: var(--gs-text-muted);
   --color-gs-text-heading: var(--gs-text-heading);
-
-  /* Cards */
   --color-gs-card-bg: var(--gs-card-bg);
   --color-gs-card-hover: var(--gs-card-hover);
   --color-gs-card-border: var(--gs-card-border);
   --color-gs-card-border-hover: var(--gs-card-border-hover);
-
-  /* Columns */
   --color-gs-col-bg: var(--gs-col-bg);
   --color-gs-col-border: var(--gs-col-border);
-
-  /* Input */
   --color-gs-input-bg: var(--gs-input-bg);
   --color-gs-input-border: var(--gs-input-border);
   --color-gs-input-focus: var(--gs-input-focus);
   --color-gs-input-text: var(--gs-input-text);
   --color-gs-input-placeholder: var(--gs-input-placeholder);
-
-  /* Buttons */
   --color-gs-btn-bg: var(--gs-btn-bg);
   --color-gs-btn-text: var(--gs-btn-text);
-
-  /* Drag */
   --box-shadow-gs-drag: var(--gs-drag-shadow);
-
-  /* NOW column */
   --color-gs-now-header-bg: var(--gs-now-header-bg);
   --color-gs-now-header-text: var(--gs-now-header-text);
   --color-gs-now-col-bg: var(--gs-now-col-bg);
   --color-gs-now-badge-bg: var(--gs-now-badge-bg);
   --color-gs-now-badge-text: var(--gs-now-badge-text);
   --color-gs-now-accent: var(--gs-now-accent);
-
-  /* SOON column */
   --color-gs-soon-header-bg: var(--gs-soon-header-bg);
   --color-gs-soon-header-text: var(--gs-soon-header-text);
   --color-gs-soon-col-bg: var(--gs-soon-col-bg);
   --color-gs-soon-badge-bg: var(--gs-soon-badge-bg);
   --color-gs-soon-badge-text: var(--gs-soon-badge-text);
   --color-gs-soon-accent: var(--gs-soon-accent);
-
-  /* LATER column */
   --color-gs-later-header-bg: var(--gs-later-header-bg);
   --color-gs-later-header-text: var(--gs-later-header-text);
   --color-gs-later-col-bg: var(--gs-later-col-bg);
   --color-gs-later-badge-bg: var(--gs-later-badge-bg);
   --color-gs-later-badge-text: var(--gs-later-badge-text);
   --color-gs-later-accent: var(--gs-later-accent);
-
-  /* Typography */
-  --font-size-gs-xs: var(--gs-text-xs);       /* 11px */
-  --font-size-gs-sm: var(--gs-text-sm);        /* 13px */
-  --font-size-gs-base: var(--gs-text-base);    /* 14px */
-  --font-size-gs-md: var(--gs-text-md);        /* 16px */
-  --font-size-gs-lg: var(--gs-text-lg);        /* 20px */
-  --font-size-gs-xl: var(--gs-text-xl);        /* 28px */
+  --font-size-gs-xs: var(--gs-text-xs);
+  --font-size-gs-sm: var(--gs-text-sm);
+  --font-size-gs-base: var(--gs-text-base);
+  --font-size-gs-md: var(--gs-text-md);
+  --font-size-gs-lg: var(--gs-text-lg);
+  --font-size-gs-xl: var(--gs-text-xl);
   --font-size-gs-badge: 12px;
   --font-size-gs-heading: 18px;
-
-  /* Radius */
   --radius-gs-sm: var(--gs-radius-sm);
   --radius-gs-md: var(--gs-radius-md);
   --radius-gs-lg: var(--gs-radius-lg);
@@ -93,6 +70,10 @@ body {
   opacity: 1;
 }
 
+input {
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
 input:focus {
   border-color: var(--gs-input-focus);
 }
@@ -100,4 +81,153 @@ input:focus {
 button:focus-visible {
   outline: 2px solid var(--gs-text-primary);
   outline-offset: 2px;
+}
+
+.gs-header {
+  background-color: var(--gs-header-bg);
+  border-bottom: 1px solid var(--gs-header-border);
+}
+
+.gs-col-now {
+  --col-accent: var(--gs-now-accent);
+  --col-accent-soft: var(--gs-now-accent-soft);
+}
+
+.gs-col-soon {
+  --col-accent: var(--gs-soon-accent);
+  --col-accent-soft: var(--gs-soon-accent-soft);
+}
+
+.gs-col-later {
+  --col-accent: var(--gs-later-accent);
+  --col-accent-soft: var(--gs-later-accent-soft);
+}
+
+.gs-logo-svg {
+  color: var(--gs-text-heading);
+}
+
+.gs-logo-text {
+  font-family: 'Manrope', sans-serif;
+  font-size: var(--gs-text-md);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--gs-text-heading);
+}
+
+.gs-input {
+  height: 42px;
+  font-size: var(--gs-text-base);
+  background-color: var(--gs-input-bg);
+  border: 1px solid var(--gs-input-border);
+  color: var(--gs-input-text);
+}
+
+.gs-btn {
+  height: 42px;
+  padding: 0 24px;
+  font-size: var(--gs-text-base);
+  background-color: var(--gs-btn-bg);
+  color: var(--gs-btn-text);
+}
+
+.gs-col {
+  background-color: var(--gs-col-bg);
+  border-radius: var(--gs-radius-lg);
+  border: 1px solid var(--gs-col-border);
+}
+
+.gs-col-header {
+  height: 44px;
+  background-color: var(--col-accent-soft);
+}
+
+.gs-col-header-text {
+  font-size: var(--gs-text-sm);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--col-accent);
+}
+
+.gs-badge {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  background-color: var(--col-accent);
+  color: white;
+  border-radius: 6px;
+}
+
+.gs-col-body {
+  padding: 12px;
+  gap: 8px;
+  min-height: 300px;
+  transition: border-color 0.2s;
+}
+
+.gs-empty {
+  font-size: var(--gs-text-sm);
+  font-weight: 400;
+  color: var(--gs-text-secondary);
+  padding-top: 40px;
+}
+
+.gs-card {
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: var(--card-accent);
+  border-radius: var(--gs-radius-md);
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.gs-card-idle {
+  background-color: var(--gs-card-bg);
+  border-top: 1px solid var(--gs-card-border);
+  border-right: 1px solid var(--gs-card-border);
+  border-bottom: 1px solid var(--gs-card-border);
+}
+
+.gs-card-hovered {
+  background-color: var(--gs-card-hover);
+  border-top-color: var(--gs-card-border-hover);
+  border-right-color: var(--gs-card-border-hover);
+  border-bottom-color: var(--gs-card-border-hover);
+}
+
+.gs-drag-handle {
+  color: var(--gs-text-muted);
+}
+
+.gs-card-title {
+  font-size: var(--gs-text-base);
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--gs-text-primary);
+}
+
+.gs-card-meta {
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.gs-clock-icon {
+  color: var(--gs-text-secondary);
+}
+
+.gs-timestamp {
+  font-size: var(--gs-text-xs);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--gs-text-secondary);
+}
+
+.gs-delete-btn {
+  width: 22px;
+  height: 22px;
+  color: var(--gs-text-muted);
 }
