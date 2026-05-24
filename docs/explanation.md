@@ -46,24 +46,27 @@ tasks.filter(t => t.column === 'later') // → what LATER renders
 
 ## The Component Tree — Who Owns What
 
-**ELI7:** The `App` is the boss. It remembers everything (the task list, what you're typing). It tells the Header what to show, tells each Column which tasks belong to it, and tells each Card what to display. When something changes — you add a task, delete one, drag one — the boss hears about it and tells everyone to update.
+**ELI7:** The `App` is the boss. It remembers everything (the task list, what you're typing). It tells the Header what to show, tells each Column which tasks belong to it, and tells each Card what to display. When something changes — you add a task, delete one, drag one — the boss hears about it and tells everyone to update. There's also a safety net (`ErrorBoundary`) wrapped around everything — if anything crashes, it catches the error and shows a "try again" screen instead of a blank white page.
 
 **Dev:** State ownership is centralized in `App`. All mutations live there. Children are pure renderers:
 
 ```
-App (state owner: tasks, input)
-├── Header
-│   ├── <img> (logo)
-│   ├── <input> (controlled component, value={input} + onChange)
-│   └── <button> (onClick → addTask)
-│
-└── Board
-    └── DragDropContext (onDragEnd → onDragEnd)
-        ├── Column[id="now"]  → receives filtered tasks + onDelete
-        │   └── Droppable("now") → render-prop: provided + snapshot
-        │       └── TaskCard[] → Draggable each, indexed 0..n
-        ├── Column[id="soon"]
-        └── Column[id="later"]
+ErrorBoundary (safety net — catches render crashes)
+└── App (state owner: tasks, input)
+    ├── <h1> (sr-only — screen reader heading)
+    ├── Header
+    │   ├── <img> (logo)
+    │   ├── <label> (sr-only — "Add a new task")
+    │   ├── <input> (controlled, id="task-input")
+    │   └── <button> (onClick → addTask)
+    │
+    └── Board
+        └── DragDropContext (onDragEnd → onDragEnd)
+            ├── Column[id="now"]  → React.memo wrapped, receives filtered tasks + onDelete
+            │   └── Droppable("now") → render-prop: provided + snapshot
+            │       └── TaskCard[] → React.memo wrapped, Draggable each, indexed 0..n
+            ├── Column[id="soon"]
+            └── Column[id="later"]
 ```
 
 **State never flows up.** No child calls `setTasks`. They invoke callbacks that were passed down as props. This makes data flow predictable: find the `useState` in `App` and you've found the only place state changes.
@@ -72,14 +75,18 @@ App (state owner: tasks, input)
 
 ## Mutation 1: Creating a Task
 
-**ELI7:** You type "Buy milk" in the text box and press Enter. The app: grabs your text, trims off extra spaces, skips it if empty, gives it a secret name-tag (a random ID), stamps it with the current time, puts it in the NOW box, clears the text box so you can type the next thing.
+**ELI7:** You type "Buy milk" in the text box and press Enter. The app: grabs your text from a sticky note (a `ref` that stays in sync with what you typed), trims off extra spaces, skips it if empty or if there are already 500 tasks, gives it a secret name-tag (a random ID), stamps it with the current time, puts it in the NOW box, clears the text box so you can type the next thing.
 
 **Dev:**
 
 ```ts
+const inputRef = useRef('')
+const MAX_TASKS = 500
+
 const addTask = useCallback(() => {
-  const title = input.trim()
-  if (!title) return                          // guard clause: empty → no-op
+  const title = inputRef.current.trim()
+  if (!title) return                          // guard: empty → no-op
+  if (tasks.length >= MAX_TASKS) return        // guard: too many tasks → no-op
 
   const task: Task = {
     id: uuidv4(),                             // version-4 UUID, collision-proof
@@ -89,22 +96,33 @@ const addTask = useCallback(() => {
   }
 
   setTasks(prev => [...prev, task])           // functional updater — prev is guaranteed fresh
-  setInput('')                                // reset input to empty
-}, [input])
+  setInput('')
+  inputRef.current = ''                       // clear the ref too
+}, [tasks.length])                            // only depends on task count, not on every keystroke
 ```
+
+**Why a `ref` instead of `useCallback([input])`?**
+
+**ELI7:** Before, the app rebuilt the "add task" function every time you typed a single letter — like throwing away the recipe and rewriting it after each keystroke. Now it keeps one recipe pinned to the wall (the `ref`) and just updates the sticky note on it. The recipe stays the same, only the note changes.
+
+**Dev:** The previous code had `useCallback([input])`, which recreated `addTask` on every keystroke. Since `handleKeyDown` depended on `addTask`, it was also recreated on every keystroke — causing the `<input>` to receive a fresh `onKeyDown` prop on each character. The `useRef` pattern decouples reading the input value from the function's identity:
+
+1. `inputRef.current` is updated in `handleChange` (which runs on every keystroke)
+2. `addTask` reads `inputRef.current` instead of the `input` state
+3. `addTask`'s dependency is now `[tasks.length]` — only changes when tasks are added/deleted, not on keystrokes
 
 **Line-by-line reasoning:**
 
 | Line | ELI7 | Dev |
 |---|---|---|
-| `input.trim()` | "Snip off any blank spaces before and after your typed text" | `String.trim()` removes leading/trailing whitespace. Prevents creating a task that looks empty because it's just spaces. |
-| `if (!title) return` | "If there's nothing typed, don't do anything" | Guard clause. Falsy check — empty string, null, undefined all bail early. Prevents ghost tasks. |
-| `id: uuidv4()` | "Give the task a name-tag nobody else has" | `uuidv4()` generates a random UUID v4 like `"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"`. Collision probability is astronomically low. This ID serves triple duty: React `key`, DnD `draggableId`, and the lookup key for `find`/`filter` operations. |
-| `column: 'now'` | "New tasks always go in the red urgent box" | Philosophy: if you typed it, it's probably important. You can drag it elsewhere after. Prevents analysis paralysis at input time — you just dump and sort. |
-| `createdAt: Date.now()` | "Write down the time right now" | Stores milliseconds since Jan 1, 1970 (Unix epoch). Stored as a `number`, not a `Date` object, because numbers are trivial to compare and serialize. Used by `getRelativeTime()` to display "2 mins ago." |
-| `setTasks(prev => [...prev, task])` | "Add this task to the end of the list" | Functional updater form. `prev` is React's guaranteed-current state reference. The spread `[...prev, task]` creates a new array — immutable update (React's `Object.is` comparison detects the new reference and triggers a re-render). |
-| `setInput('')` | "Clear the text box" | Resets the controlled input, ready for the next task. |
-| `[input]` dependency | "If the typing changes, remake this function" | `useCallback` recreates `addTask` whenever `input` changes. Necessary because `addTask` closes over `input` — without the dependency, it would forever capture the initial empty string. |
+| `inputRef.current.trim()` | "Read the latest text from the sticky note, snip off blank spaces" | `useRef` holds a mutable `.current` value. It's always up to date because `handleChange` writes to it on every keystroke. Unlike state, reading a ref doesn't cause re-renders and doesn't need to be in a dependency array. |
+| `if (!title) return` | "If there's nothing typed, don't do anything" | Guard clause. Falsy check — empty string bails early. |
+| `if (tasks.length >= MAX_TASKS) return` | "If there are already 500 tasks, stop — the box is full" | Soft cap prevents the browser from locking up if thousands of tasks are created (via console script or accidental paste loop). 500 is far more than anyone would realistically triage in a session. |
+| `id: uuidv4()` | "Give the task a name-tag nobody else has" | Random UUID v4. Serves as React `key`, DnD `draggableId`, and lookup key for all operations. |
+| `column: 'now'` | "New tasks always go in the red urgent box" | Philosophy: if you typed it, it's probably important. Drag to triage later. Prevents analysis paralysis at input time. |
+| `createdAt: Date.now()` | "Write down the time right now" | Unix ms timestamp stored as a `number`. Used by `getRelativeTime()`. |
+| `setTasks(prev => [...prev, task])` | "Add this task to the end of the list" | Functional updater — `prev` is guaranteed fresh. Spread creates a new array (immutable). |
+| `[tasks.length]` dependency | "Only rebuild when the number of tasks changes" | `addTask` no longer closes over `input` — it reads from the ref. The dependency is `tasks.length` (needed for the `MAX_TASKS` guard). This means fewer rebuilds: once per add/delete, not once per keystroke.
 
 ---
 
@@ -339,16 +357,19 @@ return others
 
 ### The Drag Handle Pattern
 
-**ELI7:** You can only pick up a card by grabbing its little dot pattern on the left — not by clicking the text or the X button. This is like a suitcase: you grab the handle, not the whole suitcase. Otherwise you'd accidentally drag things when you just wanted to read or delete them.
+**ELI7:** You can only pick up a card by grabbing its little dot pattern on the left — not by clicking the text or the X button. This is like a suitcase: you grab the handle, not the whole suitcase. The grip also announces itself to screen readers: "Drag 'Buy milk' to reorder."
 
 **Dev:** By splitting `provided.draggableProps` (on the entire card) from `provided.dragHandleProps` (only on the grip icon):
 
 ```tsx
 <Draggable draggableId={task.id} index={index}>
   {(provided, snapshot) => (
-    <div ref={provided.innerRef} {...provided.draggableProps}>   {/* whole card is the draggable area */}
-      <div {...provided.dragHandleProps}>                        {/* BUT only this grip initiates drag */}
-        ⋮⋮
+    <div ref={provided.innerRef} {...provided.draggableProps}>
+      <div {...provided.dragHandleProps}
+           role="button"
+           aria-label={`Drag "${task.title}" to reorder`}
+           tabIndex={0}>
+        <svg aria-hidden="true">⋮⋮</svg>
       </div>
       {/* task text — won't trigger drag */}
       {/* delete button — won't trigger drag */}
@@ -357,7 +378,7 @@ return others
 </Draggable>
 ```
 
-`draggableProps` includes the necessary event bindings for the entire card to be positioned during drag. `dragHandleProps` restricts drag *initiation* to the grip element. `snapshot.isDragging` lets us apply a "lifted" style:
+`draggableProps` includes the necessary event bindings for the entire card to be positioned during drag. `dragHandleProps` restricts drag *initiation* to the grip element. `role="button"` and `aria-label` make it discoverable for screen reader users. `snapshot.isDragging` lets us apply a "lifted" style:
 
 ```tsx
 snapshot.isDragging ? 'opacity-[0.85] shadow-gs-drag' : ''
@@ -416,29 +437,41 @@ Without this `transform`, the browser doesn't know where to paint the card durin
 
 Now the browser receives BOTH the DnD positioning (`transform`) AND our visual styles (`backgroundColor`, `border`, etc.) in the same `style` object. The card follows the cursor correctly.
 
-### Hover handlers: guarding against drag interference
+### Declarative hover state — not imperative DOM mutation
 
-**ELI7:** When you're dragging a card, it's flying through the air. You don't want the "hover color change" to happen mid-flight — it'd look glitchy. So we check: "are we currently dragging? If yes, skip the hover stuff."
+**ELI7:** Before, when the mouse touched a card, we ran around with a paintbrush directly changing the card's color. Now, we flip a little switch called `isHovered` from "no" to "yes," and React handles the repainting for us. If the card is being dragged, we don't flip the switch at all — the flying card doesn't need a paint job mid-flight.
 
-**Dev:** Both `onMouseEnter` and `onMouseLeave` now guard with `!snapshot.isDragging`:
+**Dev:** The hover effect was originally implemented with imperative `e.currentTarget.style` mutations in `onMouseEnter`/`onMouseLeave`. After the audit, this was replaced with a `useState` boolean:
 
 ```tsx
-onMouseEnter={e => {
-  if (!snapshot.isDragging) {                     // ← guard
-    e.currentTarget.style.backgroundColor = 'var(--gs-card-hover)'
-    e.currentTarget.style.borderColor = 'var(--gs-card-border-hover)'
-    // ...
-  }
-}}
-onMouseLeave={e => {
-  if (!snapshot.isDragging) {                     // ← guard
-    e.currentTarget.style.backgroundColor = 'var(--gs-card-bg)'
-    e.currentTarget.style.borderColor = 'var(--gs-card-border)'
-  }
-}}
+const [isHovered, setIsHovered] = useState(false)
+
+// in the JSX:
+<div
+  onMouseEnter={() => { if (!snapshot.isDragging) setIsHovered(true) }}
+  onMouseLeave={() => setIsHovered(false)}
+  onFocus={() => setIsHovered(true)}
+  onBlur={() => setIsHovered(false)}
+  style={{
+    backgroundColor: snapshot.isDragging
+      ? undefined
+      : isHovered
+        ? 'var(--gs-card-hover)'
+        : 'var(--gs-card-bg)',
+    borderColor: isHovered && !snapshot.isDragging
+      ? 'var(--gs-card-border-hover)'
+      : 'var(--gs-card-border)',
+    ...
+  }}
+>
 ```
 
-Why this matters: mouse events CAN fire during or immediately after a drag (a `mouseleave` on the old position when the card is picked up, a `mouseenter` on the new position when dropped). Without the guard, `onMouseLeave` would reset `backgroundColor` and `borderColor` on the card div — potentially fighting with the post-drop animation the library is trying to play. The guard ensures our hover logic and the library's drag logic never step on each other's toes.
+| Approach | ELI7 | Dev |
+|---|---|---|
+| Old (imperative) | "Run over and repaint the card by hand" | `e.currentTarget.style.backgroundColor = ...` — mutates the DOM directly, bypassing React's render cycle. If React re-renders mid-hover, the manual style gets wiped. |
+| New (declarative) | "Flip a switch, let React do the painting" | `useState` drives the style in the normal render cycle. All visual state is computed from `isHovered` in one place — the `style` prop. Easier to reason about, can't drift out of sync. |
+
+The `onFocus`/`onBlur` handlers are new — they make the hover effect also trigger on keyboard focus (`tabIndex={0}` on the card wrapper), so keyboard users get the same visual feedback as mouse users.
 
 ---
 
@@ -449,26 +482,27 @@ Why this matters: mouse events CAN fire during or immediately after a drag (a `m
 **Dev:**
 
 ```ts
-function getRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp          // milliseconds elapsed
-  const mins = Math.floor(diff / 60_000)       // convert ms → minutes
+function getRelativeTime(timestamp: number, now: number = Date.now()): string {
+  const diff = now - timestamp                    // milliseconds elapsed
+  const mins = Math.floor(diff / 60_000)          // convert ms → minutes
 
-  if (mins < 1)   return 'Just now'            // < 60 seconds
+  if (mins < 1)   return 'Just now'               // < 60 seconds
   if (mins < 60)  return `${mins} min${mins !== 1 ? 's' : ''} ago`  // 1–59 minutes
-  if (mins < 1440) {                           // < 24 hours
+  if (mins < 1440) {                              // < 24 hours
     const hours = Math.floor(mins / 60)
     return `${hours} hour${hours !== 1 ? 's' : ''} ago`
   }
   return new Date(timestamp).toLocaleTimeString([], {
-    hour: 'numeric',                            // "2 PM" or "14:00" depending on locale
-    minute: '2-digit',                          // zero-padded: "2:05" not "2:5"
+    hour: 'numeric',                              // "2 PM" or "14:00" depending on locale
+    minute: '2-digit',                            // zero-padded: "2:05" not "2:5"
   })
 }
 ```
 
 | Line | ELI7 | Dev |
 |---|---|---|
-| `Date.now() - timestamp` | "Right now minus when you wrote it" | `Date.now()` returns current ms since epoch. Subtracting the stored timestamp gives the elapsed time in ms. Negative if `timestamp` is somehow in the future — gracefully returns "Just now." |
+| `now: number = Date.now()` | "What time is it right now? (You can also tell me a specific time for testing)" | The optional second parameter makes the function testable. Call `getRelativeTime(oneHourAgo, oneHourAgo + 3_600_000)` in a test and it always returns `"1 hour ago"` — no mocking required. In production, omit the second argument and it defaults to `Date.now()`. |
+| `Date.now() - timestamp` → `now - timestamp` | "Right now minus when you wrote it" | Subtracting the stored timestamp gives elapsed ms. The difference from the old version: `now` is a parameter, not a global call — this is what makes the function pure when called with two arguments. |
 | `Math.floor(diff / 60_000)` | "Turn milliseconds into whole minutes, rounding down" | `60_000` = 60 × 1000 = 1 minute in ms. The underscore is JS numeric separator (`60_000` = `60000`). `Math.floor` means 59 seconds = 0 minutes = "Just now," not "1 min ago." |
 | `${mins !== 1 ? 's' : ''}` | "Add an 's' if it's not exactly 1 (1 min, 2 mins)" | Simple pluralization with a ternary. A library like `pluralize` would be overkill for a single word. |
 | `toLocaleTimeString([], {...})` | "Show the time the way your computer normally does" | Empty array = default locale. `hour: 'numeric'` = 12h (2 PM) or 24h (14:00) depending on locale settings. `minute: '2-digit'` = zero-padded. |
@@ -481,14 +515,36 @@ function getRelativeTime(timestamp: number): string {
 
 **ELI7:** Instead of writing the same code three times for three columns with different colors, we write it once and give it a "recipe card" for each column. The recipe says: "Your name is NOW, your color is red, and when you're empty, say 'Nothing on fire. Nice.'" If we ever want a fourth column, we just add one more recipe card — zero code changes.
 
-**Dev:** Data-driven rendering via configuration arrays:
+**Dev:** Data-driven rendering via configuration arrays. `COLUMNS` is the single source of truth — `COLUMN_ORDER` and `columnStyles` are both derived from it:
 
 ```ts
 const COLUMNS = [
-  { id: 'now',   label: 'NOW',   empty: 'Nothing on fire. Nice.' },
-  { id: 'soon',  label: 'SOON',  empty: 'Queue is clear.' },
-  { id: 'later', label: 'LATER', empty: 'No backlog. Rare.' },
+  { id: 'now' as const,   label: 'NOW',   empty: 'Nothing on fire. Nice.' },
+  { id: 'soon' as const,  label: 'SOON',  empty: 'Queue is clear.' },
+  { id: 'later' as const, label: 'LATER', empty: 'No backlog. Rare.' },
 ]
+
+// Derived — never manually maintained. If COLUMNS order changes, this follows.
+const COLUMN_ORDER = COLUMNS.map(col => col.id) as ColumnId[]
+
+// Factory — avoids copy-pasting the same six-line object three times.
+function buildColumnStyle(id: ColumnId): ColumnStyle {
+  return {
+    headerBg:    `bg-gs-${id}-header-bg`,
+    headerText:  `text-gs-${id}-header-text`,
+    colBg:       `bg-gs-${id}-col-bg`,
+    badgeBg:     `bg-gs-${id}-badge-bg`,
+    badgeText:   `text-gs-${id}-badge-text`,
+    accent:      `border-gs-${id}-accent`,
+    accentBorder:`border-gs-${id}-accent/50`,
+  }
+}
+
+const columnStyles: Record<ColumnId, ColumnStyle> = {
+  now:   buildColumnStyle('now'),
+  soon:  buildColumnStyle('soon'),
+  later: buildColumnStyle('later'),
+}
 ```
 
 Rendered with a single `map()`:
@@ -497,13 +553,15 @@ Rendered with a single `map()`:
 {COLUMNS.map(col => <Column key={col.id} column={col} tasks={...} onDelete={...} />)}
 ```
 
-**ELI7:** "The app reads the recipe cards one by one and builds a column for each. It doesn't care if there are 3 cards or 30 — it just follows the instructions."
+**ELI7:** "The app reads the recipe cards one by one and builds a column for each. It doesn't care if there are 3 cards or 30 — it just follows the instructions. And the column order is automatic — it's read straight from how the recipes are arranged. No chance of the layout and the drag math getting out of sync."
 
 **Dev:** This pattern means:
-- Adding a column = one object in the array
-- Removing a column = one splice
+- Adding a column = one object in the array + one line in `columnStyles`
+- Removing a column = one splice + one delete
+- Reordering columns = reorder the `COLUMNS` array — `COLUMN_ORDER` follows automatically
 - Changing a label or empty message = one string edit
 - The `Column` component is fully generic — it delegates per-column differences to the `columnStyles` lookup map
+- **The factory function eliminates copy-paste bugs.** Previously, `columnStyles` had three nearly identical blocks. If one property was wrong in one block, it would be silently broken. Now the template is defined once and instantiated three times.
 
 ---
 
@@ -608,3 +666,50 @@ TaskCard re-renders in SOON
 - `tasks.length + 1` — breaks if you delete an earlier task and IDs collide
 - `crypto.randomUUID()` — built into browsers, fewer bytes, but not available in all JS runtimes
 - `uuid` library — adds ~3KB to bundle, works everywhere, proven, universal
+
+### `React.memo` on Column and TaskCard
+
+**ELI7:** Without memo, React redraws every single card and every single column every time anything changes — even if only one card moved. With memo, React knows to skip the cards that didn't change. It's like only replacing the one train car that moved instead of rebuilding the entire train.
+
+**Dev:** `Column` and `TaskCard` are wrapped in `React.memo` (imported as `memo` from React). `TaskCard` has a custom comparator that tells React: "only re-render if the task's ID, title, column, or index actually changed":
+
+```tsx
+const TaskCard = memo(function TaskCard({ task, index, onDelete }: TaskCardProps) {
+  // ...
+}, (prev, next) =>
+  prev.task.id === next.task.id &&
+  prev.task.title === next.task.title &&
+  prev.task.column === next.task.column &&
+  prev.index === next.index
+)
+```
+
+**Why it matters:** Without `React.memo`, every `addTask`, `deleteTask`, or `onDragEnd` triggers a re-render of every card in every column. With 50 tasks, dragging one card causes 49 wasted renders. The custom comparator freezes cards in unaffected columns, keeping the app responsive as the task list grows.
+
+### CSS `:focus` over imperative event handlers
+
+**ELI7:** Before, the text box had JavaScript that ran every time you clicked in or out — "when they click in, change the border. When they click out, change it back." Now CSS handles it: the browser just knows "when this input is focused, use the focus border color." Simpler, faster, works the same for mouse, keyboard, and touch.
+
+**Dev:** The `onFocus`/`onBlur` handlers that mutated `e.target.style.borderColor` were removed. Instead, `style.css` has:
+
+```css
+input:focus {
+  border-color: var(--gs-input-focus);
+}
+```
+
+The `:focus` pseudo-class handles every way an input can receive focus — Tab key, click, screen reader navigation. No JavaScript needed. The input's base border stays on the inline `style` prop; the focus variant is purely CSS.
+
+### Error Boundary — crash safety net
+
+**ELI7:** If something breaks inside the app — maybe a task has a weird value that React doesn't understand — the whole screen goes white and the user has no idea what happened. The error boundary is a safety net: it catches the crash, shows a friendly "Something went wrong" message with a "Try again" button, and the rest of the browser tab stays functional.
+
+**Dev:** `ErrorBoundary.tsx` is a React class component (error boundaries require `componentDidCatch`, which has no hook equivalent in React 19). It wraps `<App />` in `main.tsx`:
+
+```tsx
+<ErrorBoundary>
+  <App />
+</ErrorBoundary>
+```
+
+If any child component throws during render, `getDerivedStateFromError` captures the error, sets `hasError: true`, and the boundary renders a fallback UI instead of crashing the entire tree. `componentDidCatch` logs the error and component stack to the console for debugging.
