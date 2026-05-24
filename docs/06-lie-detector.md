@@ -14,3 +14,22 @@
 
 
 I believe the lie is **D** — the actual `src/tokens.css` file sets `--gs-text-muted` to `rgba(255,255,255,0.50)`, not `0.25`. The opacity was increased so timestamps and other muted text can be read clearly.
+
+---
+
+## The Reveal
+
+**D** is the lie.
+
+The statement claims `--gs-text-muted` resolves to `rgba(255,255,255,0.25)` with a 1.9:1 contrast ratio. The actual value in the dark theme block was changed from `0.25` to `0.50` during the audit fixes commit. Here is the real line:
+
+`src/tokens.css` — line 65
+```css
+--gs-text-muted: rgba(255,255,255,0.50);
+```
+
+At 50% opacity on the `#0F0F0F` background, the contrast ratio is roughly 3.9:1 — still not perfect, but a significant improvement over the stated 1.9:1. Every element using this token (timestamps, empty state text, drag handles, the delete icon) now renders with a readable level of contrast.
+
+## Verdict
+
+The investigator's guess was correct. The lie was detectable because statement D quoted a specific hex value and contrast ratio — both of which are verifiable by opening `src/tokens.css` and checking line 65. A close reader would notice the value is `0.50`, not `0.25`, and that the contrast math in the statement no longer matches the source.
