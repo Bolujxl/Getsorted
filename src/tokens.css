@@ -33,12 +33,12 @@
   --gs-space-5: 24px;
   --gs-space-6: 32px;
 
-  --gs-text-xs:   11px;
-  --gs-text-sm:   13px;
-  --gs-text-base: 14px;
-  --gs-text-md:   16px;
-  --gs-text-lg:   20px;
-  --gs-text-xl:   28px;
+  --gs-text-xs:   0.6875rem;  /* 11px */
+  --gs-text-sm:   0.8125rem;  /* 13px */
+  --gs-text-base: 0.875rem;   /* 14px */
+  --gs-text-md:   1rem;       /* 16px */
+  --gs-text-lg:   1.25rem;    /* 20px */
+  --gs-text-xl:   1.75rem;    /* 28px */
 
   /* Column accent shortcuts (for border-left, dashed outlines, etc.) */
   --gs-now-accent:  var(--gs-now-500);
@@ -62,7 +62,7 @@ html.dark {
   /* Text */
   --gs-text-primary:   #FFFFFF;
   --gs-text-secondary: rgba(255,255,255,0.5);
-  --gs-text-muted:     rgba(255,255,255,0.25);
+  --gs-text-muted:     rgba(255,255,255,0.50);
   --gs-text-heading:   #FFFFFF;
 
   /* Cards */

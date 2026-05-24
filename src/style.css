@@ -92,3 +92,12 @@ body {
   color: var(--gs-input-placeholder);
   opacity: 1;
 }
+
+input:focus {
+  border-color: var(--gs-input-focus);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--gs-text-primary);
+  outline-offset: 2px;
+}
