@@ -32,10 +32,10 @@ interface Task {
 // Column configuration
 // ---------------------------------------------------------------------------
 
-const COLUMNS = [
-  { id: 'now' as const,   label: 'NOW',   empty: 'Nothing on fire. Nice.' },
-  { id: 'soon' as const,  label: 'SOON',  empty: 'Queue is clear.' },
-  { id: 'later' as const, label: 'LATER', empty: 'No backlog. Rare.' },
+const COLUMNS: { id: ColumnId; label: string; empty: string }[] = [
+  { id: 'now',   label: 'NOW',   empty: 'Nothing on fire. Nice.' },
+  { id: 'soon',  label: 'SOON',  empty: 'Queue is clear.' },
+  { id: 'later', label: 'LATER', empty: 'No backlog. Rare.' },
 ]
 
 const COLUMN_ORDER = COLUMNS.map(col => col.id) as ColumnId[]
@@ -50,22 +50,34 @@ interface ColumnStyle {
   accentBorder: string
 }
 
-function buildColumnStyle(id: ColumnId): ColumnStyle {
-  return {
-    headerBg:    `bg-gs-${id}-header-bg`,
-    headerText:  `text-gs-${id}-header-text`,
-    colBg:       `bg-gs-${id}-col-bg`,
-    badgeBg:     `bg-gs-${id}-badge-bg`,
-    badgeText:   `text-gs-${id}-badge-text`,
-    accent:      `border-gs-${id}-accent`,
-    accentBorder:`border-gs-${id}-accent/50`,
-  }
-}
-
 const columnStyles: Record<ColumnId, ColumnStyle> = {
-  now:   buildColumnStyle('now'),
-  soon:  buildColumnStyle('soon'),
-  later: buildColumnStyle('later'),
+  now: {
+    headerBg:    'bg-gs-now-header-bg',
+    headerText:  'text-gs-now-header-text',
+    colBg:       'bg-gs-now-col-bg',
+    badgeBg:     'bg-gs-now-badge-bg',
+    badgeText:   'text-gs-now-badge-text',
+    accent:      'border-gs-now-accent',
+    accentBorder:'border-gs-now-accent/50',
+  },
+  soon: {
+    headerBg:    'bg-gs-soon-header-bg',
+    headerText:  'text-gs-soon-header-text',
+    colBg:       'bg-gs-soon-col-bg',
+    badgeBg:     'bg-gs-soon-badge-bg',
+    badgeText:   'text-gs-soon-badge-text',
+    accent:      'border-gs-soon-accent',
+    accentBorder:'border-gs-soon-accent/50',
+  },
+  later: {
+    headerBg:    'bg-gs-later-header-bg',
+    headerText:  'text-gs-later-header-text',
+    colBg:       'bg-gs-later-col-bg',
+    badgeBg:     'bg-gs-later-badge-bg',
+    badgeText:   'text-gs-later-badge-text',
+    accent:      'border-gs-later-accent',
+    accentBorder:'border-gs-later-accent/50',
+  },
 }
 
 // ---------------------------------------------------------------------------
